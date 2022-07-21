@@ -2,7 +2,6 @@ import {
   ClientConfig,
   Message,
   PubSub,
-  SubscriberOptions,
   Subscription,
   Topic,
 } from '@google-cloud/pubsub';
@@ -18,16 +17,16 @@ import {
   OutgoingResponse,
   Server,
 } from '@nestjs/microservices';
-import { ALREADY_EXISTS } from './google-pubsub.constants';
-import { GooglePubSubOptions } from './google-pubsub.interface';
+import { ALREADY_EXISTS } from '../utils/google-pubsub.constants';
+import { GooglePubSubOptions } from '../utils/google-pubsub.interface';
 import {
   closePubSub,
   closeSubscription,
   flushTopic,
-} from './utils/google-pubsub.utils';
+} from '../utils/google-pubsub.utils';
 import { Observable } from 'rxjs';
 import { isString } from 'util';
-import { GooglePubSubContext } from './google-pubsub.context';
+import { GooglePubSubContext } from '../utils/google-pubsub.context';
 
 /**
  * Supported server options.
@@ -39,7 +38,8 @@ export interface EventPattern {
 
 export class GoogleCloudPubSubServer
   extends Server
-  implements CustomTransportStrategy {
+  implements CustomTransportStrategy
+{
   //protected readonly logger = new Logger(GoogleCloudPubSubServer.name);
 
   protected readonly clientConfig: ClientConfig;
@@ -71,7 +71,8 @@ export class GoogleCloudPubSubServer
    * This method is triggered when you run "app.listen()".
    */
   async listen(callback: () => void) {
-    this.pubsub = this.createClient();
+    console.debug('Listen pubsub server');
+    this.pubsub = new PubSub(this.clientConfig);
     const topic = this.pubsub.topic(this.topicName);
 
     /* await this.createIfNotExists(topic.create.bind(topic)); */
@@ -89,7 +90,7 @@ export class GoogleCloudPubSubServer
           message.ack();
         }
       })
-      .on(ERROR_EVENT, (err: any) => this.logger.error(err));
+      .on(ERROR_EVENT, (err: any) => console.debug(err));
 
     callback();
   }
@@ -98,15 +99,15 @@ export class GoogleCloudPubSubServer
    * This method is triggered on application shutdown.
    */
   async close() {
+    console.debug('Close pubsub server');
     await closeSubscription(this.subscription);
+
+    if (!this.pubsub) {
+      throw new InternalServerErrorException('Pub/Sub not initialized');
+    }
 
     await Promise.all(
       Array.from(this.replyTopics.values()).map((replyTopic) => {
-
-        if (!this.pubsub) {
-          throw new InternalServerErrorException('Pub/Sub not initialized')
-        }
-
         return flushTopic(this.pubsub.topic(replyTopic));
       }),
     );
@@ -120,7 +121,7 @@ export class GoogleCloudPubSubServer
    * Handle server error
    */
   protected handleError = (error: unknown): void => {
-    this.logger.error({
+    console.debug({
       message: 'An error occurred with the GoogleCloudPubSubServer',
       error,
     });
@@ -144,8 +145,9 @@ export class GoogleCloudPubSubServer
   public async handleMessage(message: Message) {
     const { data, attributes } = message;
     const rawMessage = JSON.parse(data.toString());
+    console.debug('message pubsub: ', rawMessage);
 
-    //console.log('rawMessage : ' + JSON.stringify(rawMessage));
+    //console.debug('rawMessage : ' + JSON.stringify(rawMessage));
     const packet = this.deserializer.deserialize(rawMessage) as IncomingRequest;
 
     const pattern = isString(packet.pattern)
@@ -190,9 +192,8 @@ export class GoogleCloudPubSubServer
     replyTo: string,
     id: string,
   ): Promise<void> {
-
     if (!this.pubsub) {
-      throw new InternalServerErrorException('Pub/Sub not initialized')
+      throw new InternalServerErrorException('Pub/Sub not initialized');
     }
 
     Object.assign(message, { id });
@@ -202,12 +203,8 @@ export class GoogleCloudPubSubServer
     );
 
     this.replyTopics.add(replyTo);
-
+    console.debug(`Seding message to ${replyTo}`, { json: outgoingResponse });
     await this.pubsub.topic(replyTo).publishMessage({ json: outgoingResponse });
-  }
-
-  private createClient(): PubSub {
-    return new PubSub(this.clientConfig);
   }
 
   public async createIfNotExists(create: () => Promise<any>) {

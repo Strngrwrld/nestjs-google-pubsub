@@ -13,18 +13,13 @@ import {
   WritePacket,
 } from '@nestjs/microservices';
 import { ERROR_EVENT, MESSAGE_EVENT } from '@nestjs/microservices/constants';
-import { ALREADY_EXISTS } from './google-pubsub.constants';
-import { GooglePubSubOptions } from './google-pubsub.interface';
+import { ALREADY_EXISTS } from '../utils/google-pubsub.constants';
+import { GooglePubSubOptions } from '../utils/google-pubsub.interface';
 
 export class GoogleCloudPubSubClient extends ClientProxy {
-  /**
-   * Logger
-   */
-  protected logger: Logger = new Logger(GoogleCloudPubSubClient.name);
-
-  protected topic: Topic | null = null;
-  protected replySubscription: Subscription | null = null;
-  protected pubSubClient: PubSub | null = null;
+  protected topic: Topic = null;
+  protected replySubscription: Subscription = null;
+  protected pubSubClient: PubSub = null;
   //private readonly topics: Map<string, Topic>;
   //private readonly options?: ClientConfig;
 
@@ -48,11 +43,12 @@ export class GoogleCloudPubSubClient extends ClientProxy {
   }
 
   async connect(): Promise<PubSub> {
+    console.debug('conecting pubsub - init');
     if (this.pubSubClient) {
       return this.pubSubClient;
     }
 
-    this.pubSubClient = this.createClient();
+    this.pubSubClient = new PubSub(this.clientConfig);
     this.topic = this.pubSubClient.topic(this.topicName);
 
     const replyTopic = this.pubSubClient.topic(this.replyTopicName);
@@ -73,26 +69,29 @@ export class GoogleCloudPubSubClient extends ClientProxy {
           message.ack();
         }
       })
-      .on(ERROR_EVENT, (err: any) => this.logger.error(JSON.stringify(err)));
+      .on(ERROR_EVENT, (err: any) => console.debug(JSON.stringify(err)));
 
-    console.debug('connect');
+    console.debug('conecting pubsub - finish');
     return this.pubSubClient;
   }
 
   async close() {
-    if (!this.topic) {
-      throw new InternalServerErrorException('Topic not initialized')
+    console.debug('closing pubsub');
+
+    if (this.topic) {
+      await this.topic.flush();
+      this.topic = null;
     }
 
-    if (!this.pubSubClient) {
-      throw new InternalServerErrorException('PubSub Client not initialized')
+    if (this.pubSubClient) {
+      await this.pubSubClient.close();
+      this.pubSubClient = null;
     }
 
-    await this.topic.flush();
-    await this.pubSubClient.close();
-    this.pubSubClient = null;
-    this.topic = null;
-    this.replySubscription = null;
+    if (this.replySubscription) {
+      await this.replySubscription.close();
+      this.replySubscription = null;
+    }
   }
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -101,6 +100,7 @@ export class GoogleCloudPubSubClient extends ClientProxy {
     callback: (packet: WritePacket<any>) => void,
   ): () => void {
     try {
+      console.debug('message send: ', partialPacket);
       // prepare the outbound packet, and do other setup steps
       const packet = this.assignPacketId(partialPacket);
       const data = this.serializer.serialize(packet);
@@ -135,7 +135,7 @@ export class GoogleCloudPubSubClient extends ClientProxy {
 
   public async handleResponse(data: Buffer) {
     const rawMessage = JSON.parse(data.toString());
-    //console.debug('rawMessage :' + JSON.stringify(rawMessage));
+    console.debug('message recived: ' + JSON.stringify(rawMessage));
 
     const { err, response, isDisposed, id } = this.deserializer.deserialize(
       rawMessage,
@@ -173,9 +173,8 @@ export class GoogleCloudPubSubClient extends ClientProxy {
 
     console.debug('dispatchEvent : ' + JSON.stringify(packet));
 
-
     if (!this.topic) {
-      throw new InternalServerErrorException('Topic not initialized')
+      throw new InternalServerErrorException('Topic not initialized');
     }
 
     const data = this.serializer.serialize(packet);
@@ -183,7 +182,7 @@ export class GoogleCloudPubSubClient extends ClientProxy {
       { json: data, attributes: data.metadata },
       (err) => {
         if (err) {
-          this.logger.error(err);
+          console.debug(err);
         }
       },
     );
@@ -203,7 +202,4 @@ export class GoogleCloudPubSubClient extends ClientProxy {
     return { packet: packet.data, metadata };
   }
 */
-  private createClient(): PubSub {
-    return new PubSub(this.clientConfig);
-  }
 }

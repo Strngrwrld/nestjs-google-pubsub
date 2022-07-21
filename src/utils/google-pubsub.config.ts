@@ -7,7 +7,7 @@ import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Type } from '@nestjs/common';
 
 import { GooglePubSubOptions } from './google-pubsub.interface';
-import { PubSubService } from './google-pubsub.service';
+import { PubSubService } from '../google-pubsub.service';
 
 export class PubSubConfig implements GooglePubSubOptions {
   constructor(

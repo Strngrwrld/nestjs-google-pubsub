@@ -1,8 +1,12 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { GoogleCloudPubSubClient } from './google-pubsub.client';
-import { PubSubConfig } from './google-pubsub.config';
+import { GoogleCloudPubSubClient } from './client/google-pubsub.client';
+import { PubSubConfig } from './utils/google-pubsub.config';
 
 @Injectable()
 export class PubSubService implements OnModuleInit, OnModuleDestroy {
@@ -20,11 +24,11 @@ export class PubSubService implements OnModuleInit, OnModuleDestroy {
     return this.client.send(pattern, data);
   }
 
-  onModuleDestroy(): void {
-    this.client.close();
+  onModuleInit() {
+    return this.client.connect();
   }
 
-  onModuleInit(): void {
-    this.client.connect();
+  onModuleDestroy() {
+    return this.client.close();
   }
 }

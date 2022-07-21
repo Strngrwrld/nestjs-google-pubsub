@@ -5,8 +5,8 @@ import {
   PubSubModuleAsyncOptions,
   PubSubOptionsFactory,
   PubSubConfig,
-} from './google-pubsub.config';
-import { PUB_SUB_MODULE_OPTIONS } from './google-pubsub.constants';
+} from './utils/google-pubsub.config';
+import { PUB_SUB_MODULE_OPTIONS } from './utils/google-pubsub.constants';
 import { PubSubService } from './google-pubsub.service';
 
 @Module({

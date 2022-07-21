@@ -1,8 +1,9 @@
 {
-  "name": "nestjs-google-pubsub",
-  "version": "1.0.1",
+  "name": "nestjs-google-broker",
+  "version": "1.0.3",
   "description": "libreria de implementacion de capa de transporte pubsub",
-  "main": "dist/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist/**/*",
     "*.md"
@@ -39,7 +40,6 @@
   },
   "dependencies": {
     "@google-cloud/pubsub": "^3.0.1",
-    "nestjs-logger": "github:Strngrwrld/nestjs-logger",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
