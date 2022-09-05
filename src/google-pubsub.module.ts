@@ -7,17 +7,17 @@ import {
   PubSubConfig,
 } from './utils/google-pubsub.config';
 import { PUB_SUB_MODULE_OPTIONS } from './utils/google-pubsub.constants';
-import { PubSubService } from './google-pubsub.service';
+import { GooglePubSubService } from './google-pubsub.service';
 
 @Module({
-  providers: [PubSubService],
-  exports: [PubSubService],
+  providers: [GooglePubSubService],
+  exports: [GooglePubSubService],
 })
 export class GooglePubSubModule {
   static forRootAsync(options: PubSubModuleAsyncOptions): DynamicModule {
     const provider: Provider = {
       inject: [PUB_SUB_MODULE_OPTIONS],
-      provide: PubSubService,
+      provide: GooglePubSubService,
       useFactory: (options: PubSubConfig) => createPubSubClient(options),
     };
 

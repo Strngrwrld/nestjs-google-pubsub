@@ -1,6 +1,6 @@
 {
   "name": "nestjs-google-broker",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "libreria de implementacion de capa de transporte pubsub",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,12 +40,13 @@
   },
   "dependencies": {
     "@google-cloud/pubsub": "^3.0.1",
+    "rxjs": "^7.5.6",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@nestjs/common": "^8.4.6",
-    "@nestjs/microservices": "^8.4.6",
     "@nestjs/core": "^8.4.6",
+    "@nestjs/microservices": "^8.4.6",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
     "@types/express": "^4.17.13",

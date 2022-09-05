@@ -9,7 +9,7 @@ import { GoogleCloudPubSubClient } from './client/google-pubsub.client';
 import { PubSubConfig } from './utils/google-pubsub.config';
 
 @Injectable()
-export class PubSubService implements OnModuleInit, OnModuleDestroy {
+export class GooglePubSubService implements OnModuleInit, OnModuleDestroy {
   protected readonly client: ClientProxy;
 
   constructor(config: PubSubConfig) {
