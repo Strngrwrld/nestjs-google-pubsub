@@ -13,13 +13,14 @@ export class PubSubConfig implements GooglePubSubOptions {
   constructor(
     public clientConfig: ClientConfig,
     public topic?: string,
+    public isEncode?: boolean,
     public subscription?: string,
     public replyTopic?: string,
     public replySubscription?: string,
     public noAck?: boolean,
     public publisher?: PublishOptions,
-    public subscriber?: SubscriberOptions
-  ) { }
+    public subscriber?: SubscriberOptions,
+  ) {}
 }
 
 export interface PubSubOptionsFactory {
@@ -27,6 +28,11 @@ export interface PubSubOptionsFactory {
 }
 
 export function createPubSubClient(options: PubSubConfig): GooglePubSubService {
+  if (options.isEncode) {
+    const credencias = { private_key: Buffer.from('base64').toString() };
+    options.clientConfig.credentials = { ...credencias };
+  }
+
   const client = new GooglePubSubService(options);
   return client;
 }

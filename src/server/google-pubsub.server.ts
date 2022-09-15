@@ -147,7 +147,6 @@ export class GoogleCloudPubSubServer
     const rawMessage = JSON.parse(data.toString());
     console.debug('message pubsub: ', rawMessage);
 
-    //console.debug('rawMessage : ' + JSON.stringify(rawMessage));
     const packet = this.deserializer.deserialize(rawMessage) as IncomingRequest;
 
     const pattern = isString(packet.pattern)
@@ -206,7 +205,7 @@ export class GoogleCloudPubSubServer
     console.debug(`Seding message to ${replyTo}`, { json: outgoingResponse });
     await this.pubsub.topic(replyTo).publishMessage({ json: outgoingResponse });
   }
-
+/* 
   public async createIfNotExists(create: () => Promise<any>) {
     try {
       await create();
@@ -215,5 +214,5 @@ export class GoogleCloudPubSubServer
         throw error;
       }
     }
-  }
+  } */
 }
