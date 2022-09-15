@@ -14,7 +14,7 @@ import {
 } from '@nestjs/microservices';
 import { ERROR_EVENT, MESSAGE_EVENT } from '@nestjs/microservices/constants';
 import { ALREADY_EXISTS } from '../utils/google-pubsub.constants';
-import { GooglePubSubOptions } from '../utils/google-pubsub.interface';
+import { GooglePubSubOptions } from '../utils/interfaces/google-pubsub.interface';
 
 export class GoogleCloudPubSubClient extends ClientProxy {
   protected topic: Topic = null;
@@ -32,7 +32,13 @@ export class GoogleCloudPubSubClient extends ClientProxy {
   constructor(options: GooglePubSubOptions) {
     super();
 
-    this.clientConfig = options.clientConfig;
+    this.clientConfig = {
+      projectId: options.credentials.projectId,
+      credentials: {
+        private_key: options.credentials.privateKey,
+        client_email: options.credentials.clientEmail,
+      },
+    };
     this.topicName = options.topic;
     this.replyTopicName = options.replyTopic;
     this.replySubscriptionName = options.replySubscription;

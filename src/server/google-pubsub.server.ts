@@ -18,7 +18,7 @@ import {
   Server,
 } from '@nestjs/microservices';
 import { ALREADY_EXISTS } from '../utils/google-pubsub.constants';
-import { GooglePubSubOptions } from '../utils/google-pubsub.interface';
+import { GooglePubSubOptions } from '../utils/interfaces/google-pubsub.interface';
 import {
   closePubSub,
   closeSubscription,
@@ -56,8 +56,18 @@ export class GoogleCloudPubSubServer
 
   constructor(private readonly options: GooglePubSubOptions) {
     super();
+    //Decoding private key
+    const privateKey = options.isEncode
+      ? Buffer.from(options.credentials.privateKey, 'base64').toString()
+      : options.credentials.privateKey;
 
-    this.clientConfig = this.options.clientConfig;
+    this.clientConfig = {
+      projectId: options.credentials.projectId,
+      credentials: {
+        private_key: privateKey,
+        client_email: options.credentials.clientEmail,
+      },
+    };
     this.subscriptionName = this.options.subscription;
     this.replyTopics = new Set();
     this.topicName = this.options.topic;
@@ -205,7 +215,7 @@ export class GoogleCloudPubSubServer
     console.debug(`Seding message to ${replyTo}`, { json: outgoingResponse });
     await this.pubsub.topic(replyTo).publishMessage({ json: outgoingResponse });
   }
-/* 
+  /* 
   public async createIfNotExists(create: () => Promise<any>) {
     try {
       await create();

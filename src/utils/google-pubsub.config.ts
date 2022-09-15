@@ -6,12 +6,13 @@ import {
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Type } from '@nestjs/common';
 
-import { GooglePubSubOptions } from './google-pubsub.interface';
+import { GooglePubSubOptions } from './interfaces/google-pubsub.interface';
 import { GooglePubSubService } from '../google-pubsub.service';
+import { GoogleCredentials } from './interfaces/google-credentials.interface';
 
 export class PubSubConfig implements GooglePubSubOptions {
   constructor(
-    public clientConfig: ClientConfig,
+    public credentials: GoogleCredentials,
     public topic?: string,
     public isEncode?: boolean,
     public subscription?: string,
@@ -29,8 +30,12 @@ export interface PubSubOptionsFactory {
 
 export function createPubSubClient(options: PubSubConfig): GooglePubSubService {
   if (options.isEncode) {
-    const credencias = { private_key: Buffer.from('base64').toString() };
-    options.clientConfig.credentials = { ...credencias };
+    const privateKey = Buffer.from(
+      options.credentials.privateKey,
+      'base64',
+    ).toString();
+
+    options.credentials.privateKey = privateKey;
   }
 
   const client = new GooglePubSubService(options);
